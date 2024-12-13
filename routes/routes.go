@@ -12,8 +12,8 @@ func SetupRoutes() *mux.Router {
 
 	// User-related routes
 	router.HandleFunc("/users", handlers.CreateUser).Methods("POST")            // Create User
-	// router.HandleFunc("/tasks", handlers.CreateTask).Methods("POST")           // Create Task
-	// router.HandleFunc("/tasks/{id}", handlers.UpdateTask).Methods("PUT")       // Update Task
+	router.HandleFunc("/tasks", handlers.CreateTask).Methods("POST")           // Create Task
+	router.HandleFunc("/tasks/{id}", handlers.UpdateTask).Methods("PUT")       // Update Task
 	// router.HandleFunc("/offers/{id}/accept", handlers.AcceptOffer).Methods("PUT") // Accept Offer
 	// router.HandleFunc("/offers/{id}/reject", handlers.RejectOffer).Methods("PUT") // Reject Offer
 	// router.HandleFunc("/tasks/{id}/accept", handlers.AcceptTaskCompletion).Methods("PUT") // Accept Task Completion
