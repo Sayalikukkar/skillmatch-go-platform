@@ -1,0 +1,12 @@
+# Compiled Go binaries
+main
+
+# Editor and IDE files
+.vscode/
+.idea/
+
+# Go module files (if you're fine keeping them tracked, remove these)
+go.sum
+
+# env file
+.env
