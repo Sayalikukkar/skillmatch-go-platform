@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"taskify/db"
 	"taskify/models"
+	"github.com/gorilla/mux"
 	// "log"
 )
 
@@ -79,30 +80,42 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
+	// Extract task ID from the URL
+	vars := mux.Vars(r)
+	taskID := vars["id"]
+
+	// Decode the request body into the Task struct
 	var task models.Task
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&task)
+	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		http.Error(w, "Error decoding task", http.StatusBadRequest)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Update the task in the database including currency and rate
-	query := "UPDATE tasks SET category = ?, task_name = ?, description = ?, expected_start_date = ?, expected_hours = ?, hourly_rate = ?, currency = ?, currency_rate = ?, status = ? WHERE id = ? AND user_id = ?"
-	result, err := db.GetDB().Exec(query, task.Category, task.TaskName, task.Description, task.ExpectedStartDate, task.ExpectedHours, task.HourlyRate, task.Currency, task.CurrencyRate, task.Status, task.ID, task.UserID)
+	// Ensure UserID is provided in the payload
+	if task.UserID == 0 {
+		http.Error(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Update the task in the database
+	query := `
+		UPDATE tasks
+		SET category = ?, task_name = ?, description = ?, expected_start_date = ?, 
+		    expected_hours = ?, hourly_rate = ?, currency = ?, currency_rate = ?, status = ?
+		WHERE id = ? AND user_id = ?
+	`
+	result, err := db.GetDB().Exec(query, task.Category, task.TaskName, task.Description, task.ExpectedStartDate,
+		task.ExpectedHours, task.HourlyRate, task.Currency, task.CurrencyRate, task.Status, taskID, task.UserID)
 	if err != nil {
 		http.Error(w, "Error updating task", http.StatusInternalServerError)
 		return
 	}
 
-	// Check if rows were affected
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		http.Error(w, "Error retrieving update result", http.StatusInternalServerError)
-		return
-	}
+	// Check if the update was applied
+	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		http.Error(w, "No task found to update", http.StatusNotFound)
+		http.Error(w, "No task found with the given ID and User ID", http.StatusNotFound)
 		return
 	}
 
@@ -110,5 +123,6 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Task updated successfully"})
 }
+
 
 
