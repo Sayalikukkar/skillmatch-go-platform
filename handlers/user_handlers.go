@@ -57,24 +57,25 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // CreateTask allows a user to create a new task
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	var task models.Task
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&task)
+	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		http.Error(w, "Error decoding task", http.StatusBadRequest)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Insert the task into the database, including currency and rate
-	query := "INSERT INTO tasks (user_id, category, task_name, description, expected_start_date, expected_hours, hourly_rate, currency, currency_rate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-	_, err = db.GetDB().Exec(query, task.UserID, task.Category, task.TaskName, task.Description, task.ExpectedStartDate, task.ExpectedHours, task.HourlyRate, task.Currency, task.CurrencyRate, task.Status)
+	query := `INSERT INTO tasks (user_id, category, task_name, description, expected_start_date, expected_hours, hourly_rate, currency, currency_rate, status) 
+	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	result, err := db.GetDB().Exec(query, task.UserID, task.Category, task.TaskName, task.Description, task.ExpectedStartDate, task.ExpectedHours, task.HourlyRate, task.Currency, task.CurrencyRate, task.Status)
 	if err != nil {
 		http.Error(w, "Error creating task", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with success
+	id, _ := result.LastInsertId()
+	task.ID = int(id)
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Task created successfully"})
+	json.NewEncoder(w).Encode(task)
 }
 
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
