@@ -7,6 +7,7 @@ import (
 	"taskify/db"
 	"taskify/models"
 	"github.com/gorilla/mux"
+	"strconv"
 	// "log"
 )
 
@@ -104,4 +105,74 @@ func UpdateSkill(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Skill updated successfully"})
+}
+
+func MakeOffer(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	taskIDStr := vars["id"] // Extract task ID as string
+
+	// Convert taskID to integer
+	taskID, err := strconv.Atoi(taskIDStr)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	var offer models.Offer
+	err = json.NewDecoder(r.Body).Decode(&offer)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	offer.TaskID = taskID // Assign the integer task ID to the offer
+
+	// Insert the offer into the database
+	query := `INSERT INTO offers (task_id, provider_id, offered_rate, message) VALUES (?, ?, ?, ?)`
+	_, err = db.GetDB().Exec(query, offer.TaskID, offer.ProviderID, offer.OfferedRate, offer.Message)
+	if err != nil {
+		http.Error(w, "Error creating offer", http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with success
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Offer made successfully"})
+}
+
+func UpdateTaskProgress(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	taskID := vars["id"]
+
+	var progress models.TaskProgress
+	err := json.NewDecoder(r.Body).Decode(&progress)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	query := `UPDATE tasks SET progress_description = ?, progress_timestamp = ? WHERE id = ?`
+	_, err = db.GetDB().Exec(query, progress.Description, progress.Timestamp, taskID)
+	if err != nil {
+		http.Error(w, "Error updating task progress", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Task progress updated successfully"})
+}
+
+func MarkTaskCompleted(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	taskID := vars["id"]
+
+	query := `UPDATE tasks SET status = 'Completed' WHERE id = ?`
+	_, err := db.GetDB().Exec(query, taskID)
+	if err != nil {
+		http.Error(w, "Error marking task as completed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Task marked as completed"})
 }

@@ -124,5 +124,50 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Task updated successfully"})
 }
 
+func AcceptOffer(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	offerID := vars["id"]
+
+	query := `UPDATE offers SET status = 'Accepted' WHERE id = ?`
+	_, err := db.GetDB().Exec(query, offerID)
+	if err != nil {
+		http.Error(w, "Error accepting offer", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Offer accepted successfully"})
+}
+
+func RejectOffer(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	offerID := vars["id"]
+
+	query := `UPDATE offers SET status = 'Rejected' WHERE id = ?`
+	_, err := db.GetDB().Exec(query, offerID)
+	if err != nil {
+		http.Error(w, "Error rejecting offer", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Offer rejected successfully"})
+}
+
+func AcceptTaskCompletion(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	taskID := vars["id"]
+
+	query := `UPDATE tasks SET status = 'Approved' WHERE id = ?`
+	_, err := db.GetDB().Exec(query, taskID)
+	if err != nil {
+		http.Error(w, "Error accepting task completion", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Task completion accepted"})
+}
+
 
 
