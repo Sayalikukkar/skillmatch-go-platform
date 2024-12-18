@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"taskify/db"
 	"taskify/models"
+
 	"github.com/gorilla/mux"
-	"strconv"
 	// "log"
 )
 
@@ -151,7 +152,7 @@ func UpdateTaskProgress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `UPDATE tasks SET progress_description = ?, progress_timestamp = ? WHERE id = ?`
+	query := `UPDATE task_progress SET description = ?, timestamp = ? WHERE id = ?`
 	_, err = db.GetDB().Exec(query, progress.Description, progress.Timestamp, taskID)
 	if err != nil {
 		http.Error(w, "Error updating task progress", http.StatusInternalServerError)

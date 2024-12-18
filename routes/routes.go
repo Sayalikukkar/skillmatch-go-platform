@@ -3,8 +3,9 @@ package routes
 import (
 	// "net/http"
 	"taskify/handlers"
-	"github.com/gorilla/mux"
 	"taskify/middleware"
+
+	"github.com/gorilla/mux"
 )
 
 // SetupRoutes initializes the routes for the application
